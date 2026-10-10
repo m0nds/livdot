@@ -76,7 +76,13 @@ export function useEvent(eventId: string): UseEventResult {
       try {
         setEvent(await api.setRequirement(eventId, requirementId, satisfied))
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'failed to update requirement')
+        setActionError(
+          err instanceof api.RequirementLockedError
+            ? 'requirements are locked once the event is ready for streaming'
+            : err instanceof Error
+              ? err.message
+              : 'failed to update requirement',
+        )
       } finally {
         setPendingRequirements((prev) => {
           const next = new Set(prev)
@@ -95,7 +101,15 @@ export function useEvent(eventId: string): UseEventResult {
       try {
         setEvent(await api.setSchedule(eventId, scheduledAt))
       } catch (err) {
-        setActionError(err instanceof Error ? err.message : 'failed to schedule event')
+        setActionError(
+          err instanceof api.ScheduleInvalidError
+            ? err.reason === 'in-past'
+              ? 'scheduled date must be in the future'
+              : 'enter a valid date and time'
+            : err instanceof Error
+              ? err.message
+              : 'failed to schedule event',
+        )
       } finally {
         setIsScheduling(false)
       }

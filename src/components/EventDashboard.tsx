@@ -1,3 +1,4 @@
+import { isReadinessEditable } from '../domain'
 import { useEvent } from '../hooks/useEvent'
 import { EventStateBadge } from './EventStateBadge'
 import { ReadinessChecklist } from './ReadinessChecklist'
@@ -44,7 +45,13 @@ export function EventDashboard({ eventId }: EventDashboardProps) {
             requirements={event.requirements}
             pendingRequirements={pendingRequirements}
             onToggle={(id, satisfied) => toggleRequirement(id, satisfied)}
+            locked={!isReadinessEditable(event.state)}
           />
+          {!isReadinessEditable(event.state) && (
+            <p className="mt-2 text-xs text-neutral-400">
+              Locked — requirements can't change once the event is ready for streaming.
+            </p>
+          )}
         </section>
         <section aria-label="actions" className="rounded border border-neutral-200 p-4">
           <h2 className="mb-3 text-sm font-medium text-neutral-500">Actions</h2>

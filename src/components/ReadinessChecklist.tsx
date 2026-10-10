@@ -4,12 +4,14 @@ interface ReadinessChecklistProps {
   requirements: ReadinessRequirement[]
   pendingRequirements: Set<RequirementId>
   onToggle: (id: RequirementId, satisfied: boolean) => void
+  locked?: boolean
 }
 
 export function ReadinessChecklist({
   requirements,
   pendingRequirements,
   onToggle,
+  locked = false,
 }: ReadinessChecklistProps) {
   return (
     <ul className="flex flex-col gap-2">
@@ -21,7 +23,7 @@ export function ReadinessChecklist({
               type="checkbox"
               id={`requirement-${requirement.id}`}
               checked={requirement.satisfied}
-              disabled={isPending}
+              disabled={isPending || locked}
               onChange={(event) => onToggle(requirement.id, event.target.checked)}
             />
             <label

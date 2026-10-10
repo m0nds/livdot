@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { nextState } from '../domain'
+import { checkSchedule, nextState } from '../domain'
 import type { Event, EventState, TransitionCheck } from '../domain'
 
 const TARGET_LABEL: Record<EventState, string> = {
@@ -41,6 +41,7 @@ export function TransitionControls({
 }: TransitionControlsProps) {
   const [scheduleInput, setScheduleInput] = useState('')
   const target = nextState(event.state)
+  const scheduleCheck = scheduleInput ? checkSchedule(scheduleInput) : null
 
   if (!target) {
     return (
@@ -56,21 +57,30 @@ export function TransitionControls({
   return (
     <div className="flex flex-col gap-3">
       {event.state === 'draft' && (
-        <div className="flex items-center gap-2">
-          <input
-            type="datetime-local"
-            value={scheduleInput}
-            onChange={(e) => setScheduleInput(e.target.value)}
-            className="border border-neutral-300 px-2 py-1 text-sm"
-          />
-          <button
-            type="button"
-            disabled={!scheduleInput || isScheduling}
-            onClick={() => onSchedule(new Date(scheduleInput).toISOString())}
-            className="border border-neutral-300 px-3 py-1 text-sm disabled:opacity-40"
-          >
-            {isScheduling ? 'Setting…' : 'Set schedule'}
-          </button>
+        <div>
+          <div className="flex items-center gap-2">
+            <input
+              type="datetime-local"
+              value={scheduleInput}
+              onChange={(e) => setScheduleInput(e.target.value)}
+              className="border border-neutral-300 px-2 py-1 text-sm"
+            />
+            <button
+              type="button"
+              disabled={!scheduleInput || isScheduling || scheduleCheck?.allowed === false}
+              onClick={() => onSchedule(new Date(scheduleInput).toISOString())}
+              className="border border-neutral-300 px-3 py-1 text-sm disabled:opacity-40"
+            >
+              {isScheduling ? 'Setting…' : 'Set schedule'}
+            </button>
+          </div>
+          {scheduleCheck?.allowed === false && (
+            <p className="mt-1 text-xs text-red-600">
+              {scheduleCheck.reason === 'in-past'
+                ? 'Pick a date and time in the future'
+                : 'Enter a valid date and time'}
+            </p>
+          )}
         </div>
       )}
 

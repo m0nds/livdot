@@ -1,5 +1,12 @@
 import type { Event, RequirementId } from '../domain'
-import { checkTransition, nextState, type TransitionBlocker } from '../domain'
+import {
+  checkSchedule,
+  checkTransition,
+  isReadinessEditable,
+  nextState,
+  type ScheduleBlockReason,
+  type TransitionBlocker,
+} from '../domain'
 import { seedEvents } from './seed'
 
 const LATENCY_MS = 650
@@ -10,6 +17,21 @@ export class TransitionBlockedError extends Error {
   constructor(blockers: TransitionBlocker[]) {
     super('transition blocked')
     this.blockers = blockers
+  }
+}
+
+export class ScheduleInvalidError extends Error {
+  reason: ScheduleBlockReason
+
+  constructor(reason: ScheduleBlockReason) {
+    super('invalid schedule date')
+    this.reason = reason
+  }
+}
+
+export class RequirementLockedError extends Error {
+  constructor() {
+    super('requirement is locked')
   }
 }
 
@@ -35,6 +57,10 @@ export async function fetchEvent(id: string): Promise<Event> {
 
 export async function setSchedule(id: string, scheduledAt: string): Promise<Event> {
   const event = findEvent(id)
+
+  const check = checkSchedule(scheduledAt)
+  if (!check.allowed) throw new ScheduleInvalidError(check.reason!)
+
   event.scheduledAt = scheduledAt
   return delay(structuredClone(event))
 }
@@ -45,6 +71,8 @@ export async function setRequirement(
   satisfied: boolean,
 ): Promise<Event> {
   const event = findEvent(id)
+  if (!isReadinessEditable(event.state)) throw new RequirementLockedError()
+
   event.requirements = event.requirements.map((requirement) =>
     requirement.id === requirementId ? { ...requirement, satisfied } : requirement,
   )
