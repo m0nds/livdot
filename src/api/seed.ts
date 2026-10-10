@@ -13,3 +13,5 @@ export const seedEvents: Event[] = [
     ],
   },
 ]
+
+export const primaryEventId = seedEvents[0].id
